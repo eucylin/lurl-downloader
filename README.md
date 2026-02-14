@@ -35,14 +35,42 @@ python download.py https://lurl.cc/XXXXX -p 7777
 
 影片會下載至 `downloads/` 目錄。
 
+## UserScript（瀏覽器腳本）
+
+除了命令列工具，也提供 UserScript 瀏覽器腳本。安裝後開啟 lurl.cc 頁面會自動運作，不需要使用終端機。
+
+功能：
+- 自動年齡驗證
+- 自動嘗試日期密碼
+- 頁面右下角一鍵下載按鈕
+
+### 安裝
+
+1. 安裝 [Tampermonkey](https://www.tampermonkey.net/) 瀏覽器擴充功能（支援 Chrome / Firefox / Edge）
+2. 點擊 [`lurl-downloader.user.js`](https://raw.githubusercontent.com/cloudlin/lurl-downloader/main/lurl-downloader.user.js) 安裝腳本，或手動複製檔案內容貼到 Tampermonkey 的新腳本中
+
+### 使用流程
+
+1. 安裝完成後，開啟任何 `lurl.cc/*` 頁面，腳本會自動執行
+2. 年齡驗證 — 自動點擊確認按鈕（不需操作）
+3. 密碼保護 — 自動從頁面提取日期並填入密碼（不需操作）
+4. 影片載入後，右下角出現藍色「下載影片」按鈕
+5. 點擊按鈕即可下載影片
+
+### 注意事項
+
+- 密碼不一定是日期，自動密碼失敗時需手動輸入
+- 下載功能依賴 Tampermonkey 的 `GM_download` API 帶入 Referer，若 `GM_download` 失敗會自動開新分頁讓你右鍵另存
+
 ## 架構
 
 ```
 lurl-downloader/
-├── download.py       # 主程式
-├── requirements.txt  # Python 依賴
-├── downloads/        # 影片存放目錄
-├── CLAUDE.md         # AI 開發筆記
+├── download.py                # CLI 主程式
+├── lurl-downloader.user.js    # UserScript 瀏覽器腳本
+├── requirements.txt           # Python 依賴
+├── downloads/                 # 影片存放目錄
+├── CLAUDE.md                  # AI 開發筆記
 └── README.md
 ```
 

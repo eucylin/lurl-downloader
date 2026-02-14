@@ -134,13 +134,24 @@
     return true;
   }
 
+  function getPasswordStorageKey() {
+    return "lurl-pw-tried:" + location.pathname;
+  }
+
   function handlePassword() {
     const input = document.querySelector("input#password");
     if (!input || input.offsetParent === null) return false;
 
+    const storageKey = getPasswordStorageKey();
+    if (sessionStorage.getItem(storageKey)) {
+      log("已嘗試過自動密碼，跳過（避免無限重試）");
+      return false;
+    }
+
     const password = extractDatePassword();
     if (password) {
       log("嘗試日期密碼:", password);
+      sessionStorage.setItem(storageKey, password);
       submitPassword(password);
       return true;
     }
