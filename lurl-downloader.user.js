@@ -1,12 +1,13 @@
 // ==UserScript==
-// @name         lurl.cc 影片下載器
-// @name:zh-TW   lurl.cc 影片下載器
+// @name         lurl.cc / myppt.cc 影片下載器
+// @name:zh-TW   lurl.cc / myppt.cc 影片下載器
 // @namespace    https://github.com/cloudlin/lurl-downloader
-// @version      1.0.0
-// @description  自動年齡驗證、自動密碼填入、一鍵下載 lurl.cc 影片
-// @description:zh-TW  自動年齡驗證、自動密碼填入、一鍵下載 lurl.cc 影片
+// @version      1.1.0
+// @description  自動年齡驗證、自動密碼填入、一鍵下載 lurl.cc / myppt.cc 影片
+// @description:zh-TW  自動年齡驗證、自動密碼填入、一鍵下載 lurl.cc / myppt.cc 影片
 // @author       cloudlin
 // @match        *://lurl.cc/*
+// @match        *://myppt.cc/*
 // @grant        GM_download
 // @grant        GM_addStyle
 // @license      MIT
@@ -20,9 +21,13 @@
   const VIDEO_SELECTORS = [
     ".vjs-tech source",
     "#video source",
+    "#my_video_html5_api source",
     "video source",
     "video[src]",
+    "#my_video_html5_api[src]",
   ];
+
+  const PASSWORD_SELECTORS = ["input#password", "input#pasahaicsword"];
 
   const AGE_BUTTON_TEXTS = ["我已年滿", "進入", "確認", "Yes", "Enter"];
 
@@ -96,9 +101,17 @@
     return null;
   }
 
+  function findPasswordInput() {
+    for (const selector of PASSWORD_SELECTORS) {
+      const el = document.querySelector(selector);
+      if (el && el.offsetParent !== null) return el;
+    }
+    return null;
+  }
+
   function submitPassword(password) {
-    const input = document.querySelector("input#password");
-    if (!input || input.offsetParent === null) return false;
+    const input = findPasswordInput();
+    if (!input) return false;
 
     log("填入密碼:", password);
 
@@ -135,12 +148,12 @@
   }
 
   function getPasswordStorageKey() {
-    return "lurl-pw-tried:" + location.pathname;
+    return "video-dl-pw-tried:" + location.hostname + location.pathname;
   }
 
   function handlePassword() {
-    const input = document.querySelector("input#password");
-    if (!input || input.offsetParent === null) return false;
+    const input = findPasswordInput();
+    if (!input) return false;
 
     const storageKey = getPasswordStorageKey();
     if (sessionStorage.getItem(storageKey)) {

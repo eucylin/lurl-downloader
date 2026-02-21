@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""lurl.cc 影片下載工具"""
+"""lurl.cc / myppt.cc 影片下載工具"""
 
 import argparse
 import os
@@ -23,11 +23,17 @@ HEADERS = {
     "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
+SUPPORTED_DOMAINS = ["lurl.cc", "myppt.cc"]
+
+PASSWORD_SELECTORS = ["input#password", "input#pasahaicsword"]
+
 VIDEO_SELECTORS = [
     ".vjs-tech source",
     "#video source",
+    "#my_video_html5_api source",
     "video source",
     "video[src]",
+    "#my_video_html5_api[src]",
 ]
 
 
@@ -106,10 +112,19 @@ def handle_age_verification(page) -> None:
         pass
 
 
+def find_password_input(page):
+    """遍歷 PASSWORD_SELECTORS 找到可見的密碼欄位"""
+    for selector in PASSWORD_SELECTORS:
+        el = page.query_selector(selector)
+        if el and el.is_visible():
+            return el
+    return None
+
+
 def submit_password(page, password: str) -> bool:
     """填入密碼並提交，回傳是否成功（密碼框消失表示成功）"""
-    password_input = page.query_selector("input#password")
-    if not password_input or not password_input.is_visible():
+    password_input = find_password_input(page)
+    if not password_input:
         return True  # 沒有密碼框，視為成功
 
     print(f"  填入密碼: {password}")
@@ -138,15 +153,14 @@ def submit_password(page, password: str) -> bool:
     page.wait_for_timeout(5000)
 
     # 檢查密碼框是否還在（還在表示密碼錯誤）
-    password_input = page.query_selector("input#password")
-    return not (password_input and password_input.is_visible())
+    return not find_password_input(page)
 
 
 def handle_password(page, cli_password: str | None = None) -> None:
     """處理密碼保護頁面"""
     try:
-        password_input = page.query_selector("input#password")
-        if not password_input or not password_input.is_visible():
+        password_input = find_password_input(page)
+        if not password_input:
             return
 
         # 優先使用命令列指定的密碼
@@ -248,6 +262,10 @@ def phase2_playwright(url: str, password: str | None = None) -> str | None:
                             if (video && video.src) return video.src;
                             const source = document.querySelector('video source');
                             if (source && source.src) return source.src;
+                            const myVideo = document.querySelector('#my_video_html5_api');
+                            if (myVideo && myVideo.src) return myVideo.src;
+                            const myVideoSource = document.querySelector('#my_video_html5_api source');
+                            if (myVideoSource && myVideoSource.src) return myVideoSource.src;
                             // Video.js player
                             const player = document.querySelector('.video-js');
                             if (player && player.player) {
@@ -326,6 +344,10 @@ def phase3_playwright_headed(url: str, password: str | None = None) -> str | Non
                             if (video && video.src) return video.src;
                             const source = document.querySelector('video source');
                             if (source && source.src) return source.src;
+                            const myVideo = document.querySelector('#my_video_html5_api');
+                            if (myVideo && myVideo.src) return myVideo.src;
+                            const myVideoSource = document.querySelector('#my_video_html5_api source');
+                            if (myVideoSource && myVideoSource.src) return myVideoSource.src;
                             return null;
                         }
                     """)
@@ -386,15 +408,15 @@ def download_video(video_url: str, page_url: str) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="lurl.cc 影片下載工具")
-    parser.add_argument("url", help="lurl.cc 影片頁面 URL")
+    parser = argparse.ArgumentParser(description="lurl.cc / myppt.cc 影片下載工具")
+    parser.add_argument("url", help="lurl.cc / myppt.cc 影片頁面 URL")
     parser.add_argument("-p", "--password", help="手動指定密碼（預設會嘗試從日期自動提取）")
     args = parser.parse_args()
 
     url = args.url
     password = args.password
-    if "lurl.cc" not in url:
-        print("警告: 這不是 lurl.cc 的網址，但仍嘗試處理")
+    if not any(domain in url for domain in SUPPORTED_DOMAINS):
+        print("警告: 這不是 lurl.cc / myppt.cc 的網址，但仍嘗試處理")
 
     # Phase 1: 直接 HTTP 請求
     video_url = phase1_requests(url)
