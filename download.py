@@ -171,13 +171,12 @@ def handle_password(page, cli_password: str | None = None) -> None:
             print("  命令列指定的密碼錯誤")
 
         # 嘗試日期密碼
-        if not cli_password:
-            date_password = extract_password_from_page(page)
-            if date_password:
-                if submit_password(page, date_password):
-                    print("  日期密碼驗證成功")
-                    return
-                print("  日期密碼錯誤，需要手動輸入")
+        date_password = extract_password_from_page(page)
+        if date_password and date_password != cli_password:
+            if submit_password(page, date_password):
+                print("  日期密碼驗證成功")
+                return
+            print("  日期密碼錯誤，需要手動輸入")
 
         # 自動密碼都失敗，提示使用者手動輸入
         while True:
